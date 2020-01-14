@@ -12,17 +12,18 @@ Ticker secondTick;
 CCS811 myCCS811(CCS811_ADDR);
 ClosedCube_HDC1080 myHDC1080;
 
-
 //MQTT  credentials
 
 const char *mqtt_server = "broker.hivemq.com";
 const int mqttPort = 1883;
 int mqttTryCounter=0;
-unsigned long previousMillis = 0;
 
-//WiFiClient espClient;
-//PubSubClient client(espClient);
-//
+WiFiClient espClient;
+PubSubClient client(espClient);
+unsigned long previousMillis = 0;
+long interval = 50000;
+char sleep_time[6]="10";
+
 
 //---------------Difining Sensor Pin----------------------------------------------//
 int analogPin = A0;
@@ -41,11 +42,13 @@ int data4 = 0;
 int data5 = 0;
 int did = 1002;
 
+String data = "";
+char topic[50] = "digibox/sensor_data";
+
 //int D8=0;
 //int D7=0;
 volatile int watchdogCount = 0;
-unsigned long previousMillis1 = 0;
-unsigned long previousMillis2 = 0;
+char sensorData[68];
 
 
 extern "C" {
@@ -63,6 +66,9 @@ void ISRwatchdog() {
     ESP.reset();
   }
 }
+
+
+//--------------------------------Main Setup----------------------------------------------------//
 
 void setup() {
 
@@ -82,11 +88,17 @@ void setup() {
   }
   pinMode(analogPin, INPUT);
 
-//  client.setServer(mqtt_server,mqttPort);
   
-//  client.setCallback(callback);
+  
+  client.setServer(mqtt_server,mqttPort);//Connecting to broker
+ 
+  client.setCallback(callback); // Attaching callback for subscribe mode
+
+
 }
 
+
+//------------------------------------Main Loop--------------------------------------------------//
 void loop(){
 
     watchdogCount = 0;
@@ -94,22 +106,41 @@ void loop(){
     if (myCCS811.dataAvailable()) {
     myCCS811.readAlgorithmResults();
   }
-//  delay(250);
-if (WiFi.status() != WL_CONNECTED){ 
+
+  if (WiFi.status() != WL_CONNECTED){ 
   set_wifi();
   }
-//  delay(250);
+
+  if (!client.connected()){
+
+    reconnect();
+  }
+
+   client.loop();
+
   
-  sensor_data();
+    data = sensor_data();
+    data.toCharArray(sensorData,68);
+    Serial.println("Sendor data: " + data);
+    
+    
  
   
-//  light_sleep();
+
     unsigned long currentMillis = millis();
     Serial.println("Current Millis");
     Serial.println(currentMillis);
-    if ((unsigned long)(currentMillis - previousMillis) >= 50000) {
+    
+    if(currentMillis - previousMillis > interval) {
+    previousMillis = currentMillis;
+    Serial.println("Ticking every 50 seconds"); 
+    Serial.println(previousMillis);
+    Serial.println("Inside deep_sleep");
+    int result = client.publish("digibox/sensordata/",sensorData); 
+    Serial.println(result);
+    delay(2000);
     deep_sleep();
-    previousMillis=currentMillis;
+    
   }
     
   
@@ -117,79 +148,24 @@ if (WiFi.status() != WL_CONNECTED){
 
 
 //---------------------------------------Read Sensor Data---------------------------------------//
-
-int temp() {
-  for (int i = 1; i <= 10; i++) {
-    Temperature = Temperature + myHDC1080.readTemperature();
-    delay(100);
-  }
-  Temperature = ((Temperature / 10) - 3);
-  return Temperature ;
-}
-
-int hum() {
-  for (int i = 1; i <= 10; i++) {
-    Humidity = Humidity + myHDC1080.readHumidity();
-    delay(100);
-  }
-  Humidity = (Humidity / 10);
-  return Humidity;
-}
-
-int co2() {
-
-  Serial.println("Inside co2");
-  for (int i = 1; i <= 10; i++) {
-    carbon_dioxide = carbon_dioxide + myCCS811.getCO2();
-    
-
-  }
-  carbon_dioxide = carbon_dioxide / 10;
-  return carbon_dioxide;
-}
-
-int tvoc() {
-  Serial.println("Inside Tvoc");
-  for (int i = 1; i <= 10; i++) {
-    
-    total_voc = total_voc + myCCS811.getTVOC();
-    delay(100);
-  }
-  total_voc = total_voc / 10;
-  return total_voc;
-}
-
-//------------------Figaro_TGS2611-------------------//
-
-int tgsVal() {
-  delay(5000);      //.........5sec delay..........//
-  for (int i = 1; i <= 10; i++) {
-    int raw = analogRead(analogPin);
-    methane = pow(10, .00390625 * (raw - 0));
-    delay(100);
-  }
-  methane = methane / 10;
-  return methane;
-}
-
-//-----------------all-data------------------//
-
-int sensor_data()
+String sensor_data()
 { 
-  Serial.println("reading data");
+  Serial.println("Inside Sensor data read");
   data1 = temp(); 
   data2 = hum(); 
   data3 = co2();
   data4 = tvoc();
   data5 = tgsVal();
+
+
   
 
   String msg2 = "";
   msg2 = msg2 + "{\"DID\":" + did + "," + "\"TMP\":" + data1 + "," + "\"HUM\":" + data2 + "," + "\"CO2\":" + data3 + "," + "\"VOC\":" + data4 + "," + "\"CH4\":" + data5 + "}";
-//  msg2 = msg2 + "{\"DID\":" + did + "," + "\"CO2\":" + data3 + "," + "\"VOC\":" + data4 + "," + "\"CH4\":" + data5 + "}";
-  Serial.println(msg2);
-  delay(200);       //........ 0.2 sec delay...........//
 
+  
+  delay(200);       //........ 0.2 sec delay...........//
+  return msg2;
 
 }
 
@@ -197,7 +173,9 @@ int sensor_data()
 
 void deep_sleep(){
 Serial.println("Device is going into DEEEEEEEP_Sleep");
-  ESP.deepSleep(10 * 1000000); //sleep for 10 seconds
+  Serial.print("Sleep Time:");
+  Serial.println(atoi(sleep_time));
+  ESP.deepSleep(atoi(sleep_time) * 1000000); //sleep for 10 seconds
   delay (500);
 }
 void set_wifi() {
