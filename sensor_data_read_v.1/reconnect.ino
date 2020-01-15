@@ -16,10 +16,13 @@ void reconnect() {
     if (client.connect(clientId.c_str()))
     {
       Serial.println("connected");
+//      delay(1500);
      //once connected to MQTT broker, subscribe command if any
      //----------------------Subscribing to required topics-----------------------//
       client.subscribe("digibox/reset/");
+      delay(500);
       client.subscribe("digibox/sleep_time/");
+      delay(1000);
       client.publish("digibox/status/","awake");
                    
     }else {
@@ -38,7 +41,8 @@ void reconnect() {
       
       Serial.println(mqttTryCounter);
       mqttTryCounter=0;
-      break;
+//      break;
+      return loop();
     }
   }
 }

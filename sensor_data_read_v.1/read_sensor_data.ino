@@ -1,5 +1,5 @@
 int temp() {
-  Serial.println("Inside temp()");
+  Serial.print("Temp +");
   for (int i = 1; i <= 10; i++) {
     Temperature = Temperature + myHDC1080.readTemperature();
     delay(100);
@@ -9,7 +9,7 @@ int temp() {
 }
 
 int hum() {
-   Serial.println("Inside hum()");
+   Serial.print(" hum +");
   for (int i = 1; i <= 10; i++) {
     Humidity = Humidity + myHDC1080.readHumidity();
     delay(100);
@@ -20,7 +20,7 @@ int hum() {
 
 int co2() {
 
-  Serial.println("Inside co2()");
+  Serial.print(" co2 +");
   for (int i = 1; i <= 10; i++) {
     carbon_dioxide = carbon_dioxide + myCCS811.getCO2();
     
@@ -31,7 +31,7 @@ int co2() {
 }
 
 int tvoc() {
-  Serial.println("Inside Tvoc()");
+  Serial.print(" Tvoc +");
   for (int i = 1; i <= 10; i++) {
     
     total_voc = total_voc + myCCS811.getTVOC();
@@ -42,7 +42,8 @@ int tvoc() {
 }
 
 int tgsVal() {
-  Serial.println("Inside tgsVal()");
+  Serial.print(" TGS_Val");
+  Serial.println("");
   delay(5000);      //.........5sec delay..........//
   for (int i = 1; i <= 10; i++) {
     int raw = analogRead(analogPin);

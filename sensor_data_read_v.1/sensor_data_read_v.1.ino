@@ -18,7 +18,7 @@ ClosedCube_HDC1080 myHDC1080;
 
 //MQTT  credentials
 
-const char *mqtt_server = "broker.hivemq.com";
+const char *mqtt_server = "182.163.112.219";
 const int mqttPort = 1883;
 int mqttTryCounter=0;
 
@@ -28,7 +28,10 @@ unsigned long previousMillis = 0;
 long interval = 50000;
 unsigned long previousMillis2 = 0;
 long interval2 = 65000;
+unsigned long previousMillis3 = 0;
+long interval3 = 5000;
 char sleep_time[6]="10";
+
 
 
 //---------------Difining Sensor Pin----------------------------------------------//
@@ -114,13 +117,24 @@ void loop(){
     if (myCCS811.dataAvailable()) {
     myCCS811.readAlgorithmResults();
   }
+  unsigned long currentMillis = millis();
+if(currentMillis - previousMillis3 > interval3) {
+    previousMillis3 = currentMillis;
+    
+    Serial.println(previousMillis3);
 
-  if (WiFi.status() != WL_CONNECTED){ 
+    
+    
+    if (WiFi.status() != WL_CONNECTED){ 
+      
 //  set_wifi();
-  wifi_manager();
-  }
-
-  if (!client.connected()){
+    wifi_manager();
+    }
+    else {
+      Serial.println(" wifi already connected");
+      }
+}
+  if (!client.connected() && (WiFi.status() == WL_CONNECTED)){
 
     reconnect();
   }
@@ -133,7 +147,7 @@ void loop(){
     Serial.println("Sendor data: " + data);
 //    client.publish("DSBD/iot2020/weather_station",sensorData); 
     
-    unsigned long currentMillis = millis();
+    
     Serial.println("Current Millis");
     Serial.println(currentMillis);
     

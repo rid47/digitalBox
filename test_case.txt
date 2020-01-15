@@ -1,0 +1,8 @@
+(1) Turn off wifi
+(2) Make sure AP mode is working
+(3) Make sure watchdog is working: done
+(4) Check if Data is being published
+(5) Check reset feature
+(6) Check sleep_time set
+(7) Check reset ack
+

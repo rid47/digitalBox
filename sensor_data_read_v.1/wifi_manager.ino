@@ -1,7 +1,4 @@
-        //https://github.com/tzapu/WiFiManager
-
 //for LED status
-
 Ticker ticker;
 
 void tick()
@@ -31,7 +28,7 @@ void wifi_manager (){
   WiFiManager wifiManager;
   wifiManager.autoConnect("WeatherStationAP");
   //reset settings - for testing
-//  wifiManager.resetSettings();
+//    wifiManager.resetSettings();
 
   //set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
   wifiManager.setAPCallback(configModeCallback);

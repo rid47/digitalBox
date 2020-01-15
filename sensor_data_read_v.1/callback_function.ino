@@ -19,7 +19,12 @@ if(strcmp(topic, "digibox/reset/") == 0){
       if (data=='1')
     {
       Serial.println("Reset Board");
-      client.publish("digibox/reset/ack/","Restarted");
+      int result = client.publish("digibox/reset/ack/","Restarted");
+      if (result == 1){
+        Serial.println("Reset Ack sent successfully!");
+        }else{
+      Serial.println("Reset Ack failed to sent!");}
+      delay(1500);
       ESP.reset();
       
      }
