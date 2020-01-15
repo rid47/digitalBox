@@ -1,6 +1,10 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>  
+#include <DNSServer.h>
 #include <PubSubClient.h>
 #include <SparkFunCCS811.h>
+
 #include <ClosedCube_HDC1080.h>
 #define CCS811_ADDR 0x5A    //Alternate I2C Address
 
@@ -22,6 +26,8 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 unsigned long previousMillis = 0;
 long interval = 50000;
+unsigned long previousMillis2 = 0;
+long interval2 = 65000;
 char sleep_time[6]="10";
 
 
@@ -43,7 +49,7 @@ int data5 = 0;
 int did = 1002;
 
 String data = "";
-char topic[50] = "digibox/sensor_data";
+//char topic[50] = "DSBD/iot2020/weather_station";
 
 //int D8=0;
 //int D7=0;
@@ -61,18 +67,20 @@ extern "C" {
 
 void ISRwatchdog() {
   watchdogCount++;
-  if (watchdogCount == 300) {
+  if (watchdogCount == 180) {
     Serial.println("Watchdog bites!!");
     ESP.reset();
   }
 }
 
 
+
+
 //--------------------------------Main Setup----------------------------------------------------//
 
 void setup() {
 
-  
+  pinMode(D4, OUTPUT);
   secondTick.attach(1, ISRwatchdog);// Attaching ISRwatchdog function
   Serial.begin(115200);
   myHDC1080.begin(0x40);
@@ -108,7 +116,8 @@ void loop(){
   }
 
   if (WiFi.status() != WL_CONNECTED){ 
-  set_wifi();
+//  set_wifi();
+  wifi_manager();
   }
 
   if (!client.connected()){
@@ -122,23 +131,41 @@ void loop(){
     data = sensor_data();
     data.toCharArray(sensorData,68);
     Serial.println("Sendor data: " + data);
+//    client.publish("DSBD/iot2020/weather_station",sensorData); 
     
-    
- 
-  
-
     unsigned long currentMillis = millis();
     Serial.println("Current Millis");
     Serial.println(currentMillis);
     
     if(currentMillis - previousMillis > interval) {
+    
     previousMillis = currentMillis;
     Serial.println("Ticking every 50 seconds"); 
     Serial.println(previousMillis);
-    Serial.println("Inside deep_sleep");
-    int result = client.publish("digibox/sensordata/",sensorData); 
+    Serial.println("Inside sensor data publish");
+    if (!client.connected()){
+
+    reconnect();
+  }
+    int result = client.publish("DSBD/iot2020/weather_station",sensorData); 
     Serial.println(result);
-    delay(2000);
+    if (result ==1){
+      Serial.println("Pulished successfully");
+      }else{
+        Serial.println("Unable to publish");
+        }
+      
+//    delay(2000);
+    
+    
+  }
+
+
+  if(currentMillis - previousMillis2 > interval2) {
+    previousMillis2 = currentMillis;
+    
+    Serial.println(previousMillis2);
+    Serial.println("Inside deep_sleep");
     deep_sleep();
     
   }

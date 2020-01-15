@@ -31,7 +31,7 @@ int co2() {
 }
 
 int tvoc() {
-  Serial.println("Inside Tvoc");
+  Serial.println("Inside Tvoc()");
   for (int i = 1; i <= 10; i++) {
     
     total_voc = total_voc + myCCS811.getTVOC();
